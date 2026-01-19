@@ -5,4 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_executable(Examen_Final
         main.cpp
-        LinkedList.h)
+        LinkedList.h
+        Tropa.h
+        Item.h
+        Ejercito.h)

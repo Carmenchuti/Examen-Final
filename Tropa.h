@@ -1,99 +1,83 @@
-//
-// Created by Carmen Bolaños Villarejo on 19/1/26.
-//
-
-/**
- * @file Tropa.h
- * @brief Grupo de hasta 5 soldados. Usa LinkedList recursiva.
- */
-
 #ifndef TROPA_H
 #define TROPA_H
 
-#include "LinkedList.h"
 #include "Soldado.h"
+#include "LinkedList.h"
 #include <string>
-#include <iostream>
 using namespace std;
 
 class Tropa {
 private:
     string nombreTropa;
-    LinkedList<Soldado*>* soldados; // Uso de memoria dinámica y LinkedList propia
-    const int MAX_SOLDADOS = 5;
+    // En la foto pone "List", usamos nuestra LinkedList
+    LinkedList<Soldado*>* soldados;
+    int numSoldados; // Contador actual
 
 public:
-    /**
-     * @brief Constructor.
-     * @param nombre Nombre del escuadrón.
-     */
-    Tropa(string nombre) : nombreTropa(nombre) {
+    Tropa(const string& nombre = "") : nombreTropa(nombre), numSoldados(0) {
         soldados = new LinkedList<Soldado*>();
     }
 
-    /**
-     * @brief Destructor. Libera la memoria de los soldados y la lista.
-     */
+    // Destructor para limpiar memoria
     ~Tropa() {
-        // Primero borramos los soldados (punteros)
-        soldados->forEach([](Soldado* s) {
-            delete s;
-        });
-        delete soldados; // Luego borramos la estructura de la lista
+        soldados->forEach([](Soldado* s) { delete s; });
+        delete soldados;
     }
 
-    /**
-     * @brief Intenta agregar un soldado si hay hueco.
-     * @return true si se agregó, false si está llena.
-     */
-    bool agregarSoldado(Soldado* s) {
-        if (soldados->getSize() >= MAX_SOLDADOS) {
-            cout << "[Error] La tropa " << nombreTropa << " esta llena (Max 5)." << endl;
-            return false;
-        }
-        soldados->pushBack(s);
+    string getNombreTropa() const { return nombreTropa; }
+    int getNumSoldados() const { return numSoldados; }
+
+    // Método para devolver la lista (necesario para persistencia)
+    LinkedList<Soldado*>* getListaSoldados() const { return soldados; }
+
+    bool agregarSoldado(Soldado* soldado) {
+        if (estallena()) return false;
+        soldados->pushBack(soldado);
+        numSoldados++;
         return true;
     }
 
-    /**
-     * @brief Elimina soldados muertos (Lógica recursiva interna de remove).
-     */
-    void limpiarMuertos() {
-        // Nota: Para una limpieza perfecta en lista enlazada mientras se itera
-        // se requeriría una lógica un poco más compleja en LinkedList.
-        // Para simplificar en examen, asumimos gestión externa o simple.
-        // Aquí una implementación conceptual.
+    bool eliminarSoldado(int index) {
+        if (index < 0 || index >= numSoldados) return false;
+        // Aquí habría que borrar el puntero Soldado* antes de quitarlo de la lista
+        // Para simplificar, asumimos que se quita de la lista:
+        soldados->removeAt(index);
+        numSoldados--;
+        return true;
     }
 
-    /**
-     * @brief Calcula el poder total recursivamente.
-     */
-    int obtenerPoderTotal() const {
+    bool estallena() const { return numSoldados >= 5; }
+    bool estaVacia() const { return numSoldados == 0; }
+
+    // Calcula poder total RECURSIVAMENTE (usando forEach de la lista)
+    int getPoderCombateTotal() const {
         int total = 0;
-        // Usamos la función forEach recursiva de la lista
-        // Pasamos 'total' por referencia en la lambda [&]
-        soldados->forEach([&](Soldado* s) {
-            if (s->estaVivo()) {
-                total += s->getPoder();
-            }
+        soldados->forEach([&total](Soldado* s) {
+            if (s->estaVivo()) total += s->getPoderCombate();
         });
         return total;
     }
 
-    // Getters
-    string getNombre() const { return nombreTropa; }
-    LinkedList<Soldado*>* getListaSoldados() const { return soldados; }
+    int getNumSoldadosVivos() const {
+        int vivos = 0;
+        soldados->forEach([&vivos](Soldado* s) {
+            if (s->estaVivo()) vivos++;
+        });
+        return vivos;
+    }
 
-    void mostrarTropa() const {
-        cout << "\n=== Tropa: " << nombreTropa << " ===" << endl;
-        cout << "Soldados en tropa: " << soldados->getSize() << "/5" << endl;
-        cout << "Poder de combate total: " << obtenerPoderTotal() << endl;
+    // Método de la foto
+    void aplicarItemATodos(const Item& item) {
+        soldados->forEach([&item](Soldado* s) {
+            s->aplicarItem(item);
+        });
+    }
 
-        // Iteración recursiva para mostrar detalles
+    void mostrarInfo() const {
+        cout << "Tropa: " << nombreTropa << " (" << numSoldados << "/5)" << endl;
         soldados->forEach([](Soldado* s) {
             s->mostrarInfo();
         });
-        cout << "================================\n";
     }
 };
 

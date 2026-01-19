@@ -1,15 +1,8 @@
-//
-// Created by Carmen Bolaños Villarejo on 19/1/26.
-//
-
-/**
- * @file Soldado.h
- * @brief Unidad básica de combate. Gestiona stats y experiencia.
- */
 
 #ifndef SOLDADO_H
 #define SOLDADO_H
 
+#include "Item.h"
 #include <string>
 #include <iostream>
 using namespace std;
@@ -17,90 +10,72 @@ using namespace std;
 class Soldado {
 private:
     string nombre;
+    bool esAliado;
     int nivel;
-    int poderAtaque;
-    int vidaActual;
-    int vidaMax;
-    int experiencia;
-    int maxExperiencia; // Exp necesaria para el siguiente nivel
-    bool esAliado;      // True = Jugador, False = Enemigo
+    int poderCombate;
+    int vida;
+    int experienciaActual;
+    int experienciaParaNivel;
 
 public:
-    /**
-     * @brief Constructor de Soldado.
-     */
-    Soldado(string n, int ataque, int vida, bool aliado)
-        : nombre(n), poderAtaque(ataque), vidaActual(vida), vidaMax(vida),
-          experiencia(0), maxExperiencia(100), esAliado(aliado), nivel(1) {}
+    // Constructor según la foto IMG_4495
+    Soldado(const string& nombre = "", bool esAliado = true, int nivel = 1, int poder = 10)
+        : nombre(nombre), esAliado(esAliado), nivel(nivel), poderCombate(poder),
+          vida(100), experienciaActual(0), experienciaParaNivel(100) {}
 
-    // --- MÉTODOS DE LÓGICA RPG ---
+    // Getters const
+    string getNombre() const { return nombre; }
+    bool getEsAliado() const { return esAliado; }
+    int getNivel() const { return nivel; }
+    int getPoderCombate() const { return poderCombate; }
+    int getExperienciaActual() const { return experienciaActual; }
+    int getExperienciaParaNivel() const { return experienciaParaNivel; }
 
-    /**
-     * @brief Aumenta la experiencia y gestiona la subida de nivel.
-     * @param exp Cantidad de experiencia ganada.
-     */
+    // Setters
+    void setNivel(int n) { nivel = n; }
+    void setPoderCombate(int p) { poderCombate = p; }
+
+    // Lógica RPG
     void ganarExperiencia(int exp) {
-        if (!esAliado) return; // Los enemigos no suelen subir de nivel en combates simples
-
-        experiencia += exp;
-        cout << nombre << " gana " << exp << " XP." << endl;
-
-        // Bucle (o recursión implícita) para subir múltiples niveles si sobra mucha XP
-        while (experiencia >= maxExperiencia) {
+        experienciaActual += exp;
+        // Lógica recursiva para subir de nivel si sobra mucha exp
+        if (experienciaActual >= experienciaParaNivel) {
             subirNivel();
+            // Si sigue sobrando exp, llamada recursiva (opcional)
+            if (experienciaActual >= experienciaParaNivel) ganarExperiencia(0);
         }
     }
 
-    /**
-     * @brief Sube de nivel, resetea XP y mejora stats.
-     */
     void subirNivel() {
-        experiencia -= maxExperiencia;
+        experienciaActual -= experienciaParaNivel;
         nivel++;
-        maxExperiencia += 50; // Cada nivel cuesta más
-        poderAtaque += 5;
-        vidaMax += 20;
-        vidaActual = vidaMax; // Curar al subir nivel
-        cout << "¡" << nombre << " ha subido al Nivel " << nivel << "!" << endl;
+        poderCombate += 5;
+        vida += 20;
+        experienciaParaNivel += 50;
+        cout << nombre << " sube a nivel " << nivel << "!" << endl;
     }
 
-    /**
-     * @brief Aplica daño al soldado.
-     * @param dmg Cantidad de daño.
-     */
-    void recibirDanio(int dmg) {
-        vidaActual -= dmg;
-        if (vidaActual < 0) vidaActual = 0;
+    // IMPRESCINDIBLE SEGÚN FOTO
+    void aplicarItem(const Item& item) {
+        if (item.getTipo() == BOOST_ATAQUE) {
+            poderCombate += item.getValor();
+        } else if (item.getTipo() == BOOST_VIDA) {
+            vida += item.getValor();
+        } else if (item.getTipo() == BOOST_EXPERIENCIA) {
+            ganarExperiencia(item.getValor());
+        }
     }
 
-    /**
-     * @brief Cura al soldado (usado por Items).
-     */
-    void curar(int cantidad) {
-        vidaActual += cantidad;
-        if (vidaActual > vidaMax) vidaActual = vidaMax;
+    void recibirDanio(int danio) {
+        vida -= danio;
+        if (vida < 0) vida = 0;
     }
 
-    /**
-     * @brief Aumenta ataque permanentemente (usado por Items).
-     */
-    void buffAtaque(int cantidad) {
-        poderAtaque += cantidad;
-    }
-
-    // --- GETTERS Y SETTERS ---
-    bool estaVivo() const { return vidaActual > 0; }
-    int getPoder() const { return poderAtaque; }
-    int getVida() const { return vidaActual; }
-    string getNombre() const { return nombre; }
-    bool getEsAliado() const { return esAliado; }
+    bool estaVivo() const { return vida > 0; }
 
     void mostrarInfo() const {
-        cout << "Soldado: " << nombre
-             << " | Bando: " << (esAliado ? "Aliado" : "Enemigo")
-             << " | Nivel: " << nivel
-             << " | Poder: " << poderAtaque
-             << " | Exp: " << experiencia << "/" << maxExperiencia << endl;
+        cout << "Soldado: " << nombre << " | Nvl: " << nivel
+             << " | Poder: " << poderCombate << " | Vida: " << vida << endl;
     }
 };
 

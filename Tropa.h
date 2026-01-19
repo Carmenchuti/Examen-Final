@@ -9,16 +9,14 @@ using namespace std;
 class Tropa {
 private:
     string nombreTropa;
-    // En la foto pone "List", usamos nuestra LinkedList
     LinkedList<Soldado*>* soldados;
-    int numSoldados; // Contador actual
+    int numSoldados;
 
 public:
     Tropa(const string& nombre = "") : nombreTropa(nombre), numSoldados(0) {
         soldados = new LinkedList<Soldado*>();
     }
 
-    // Destructor para limpiar memoria
     ~Tropa() {
         soldados->forEach([](Soldado* s) { delete s; });
         delete soldados;
@@ -26,8 +24,6 @@ public:
 
     string getNombreTropa() const { return nombreTropa; }
     int getNumSoldados() const { return numSoldados; }
-
-    // Método para devolver la lista (necesario para persistencia)
     LinkedList<Soldado*>* getListaSoldados() const { return soldados; }
 
     bool agregarSoldado(Soldado* soldado) {
@@ -39,8 +35,6 @@ public:
 
     bool eliminarSoldado(int index) {
         if (index < 0 || index >= numSoldados) return false;
-        // Aquí habría que borrar el puntero Soldado* antes de quitarlo de la lista
-        // Para simplificar, asumimos que se quita de la lista:
         soldados->removeAt(index);
         numSoldados--;
         return true;
@@ -49,7 +43,6 @@ public:
     bool estallena() const { return numSoldados >= 5; }
     bool estaVacia() const { return numSoldados == 0; }
 
-    // Calcula poder total RECURSIVAMENTE (usando forEach de la lista)
     int getPoderCombateTotal() const {
         int total = 0;
         soldados->forEach([&total](Soldado* s) {
@@ -66,17 +59,25 @@ public:
         return vivos;
     }
 
-    // Método de la foto
     void aplicarItemATodos(const Item& item) {
         soldados->forEach([&item](Soldado* s) {
             s->aplicarItem(item);
         });
     }
 
-    void mostrarInfo() const {
-        cout << "Tropa: " << nombreTropa << " (" << numSoldados << "/5)" << endl;
-        soldados->forEach([](Soldado* s) {
-            s->mostrarInfo();
+    // FORMATO IDÉNTICO A LA CAPTURA
+    void mostrarInfo(int indexTropa) const {
+        // Solo mostramos el índice de tropa si es >= 0 (para ocultarlo si no queremos)
+        if (indexTropa >= 0) cout << "\n[Tropa " << indexTropa << "]" << endl;
+
+        cout << "\n=== Tropa: " << nombreTropa << " ===" << endl;
+        cout << "Soldados en tropa: " << numSoldados << "/5" << endl;
+        cout << "Poder de combate total: " << getPoderCombateTotal() << endl;
+
+        // Lambda recursiva con captura de índice para pintar [0], [1]...
+        int i = 0;
+        soldados->forEach([&i](Soldado* s) {
+            s->mostrarInfo(i++);
         });
     }
 };

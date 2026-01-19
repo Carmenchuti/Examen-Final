@@ -18,8 +18,6 @@ private:
     Node<T>* head;
     int size;
 
-    // --- RECURSIVIDAD PRIVADA ---
-
     void pushBackRec(Node<T>*& current, T val) {
         if (current == nullptr) {
             current = new Node<T>(val);
@@ -28,10 +26,8 @@ private:
         pushBackRec(current->next, val);
     }
 
-    // Función auxiliar para borrar por índice
     void removeAtRec(Node<T>*& current, int index, int currentIndex) {
         if (current == nullptr) return;
-
         if (index == currentIndex) {
             Node<T>* temp = current;
             current = current->next;
@@ -42,7 +38,6 @@ private:
         removeAtRec(current->next, index, currentIndex + 1);
     }
 
-    // Recorrido funcional recursivo (para evitar iteradores)
     void forEachRec(Node<T>* current, function<void(T)> action) const {
         if (current == nullptr) return;
         action(current->data);
@@ -63,7 +58,6 @@ private:
 
 public:
     LinkedList() : head(nullptr), size(0) {}
-
     ~LinkedList() { clearRec(head); }
 
     void pushBack(T val) {
@@ -83,7 +77,6 @@ public:
     int getSize() const { return size; }
     bool isEmpty() const { return head == nullptr; }
 
-    // Método clave para cumplir "aplicarItemATodos" sin bucles for
     void forEach(function<void(T)> action) const {
         forEachRec(head, action);
     }

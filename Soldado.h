@@ -1,4 +1,3 @@
-
 #ifndef SOLDADO_H
 #define SOLDADO_H
 
@@ -18,12 +17,10 @@ private:
     int experienciaParaNivel;
 
 public:
-    // Constructor según la foto IMG_4495
-    Soldado(const string& nombre = "", bool esAliado = true, int nivel = 1, int poder = 10)
+    Soldado(const string& nombre = "", bool esAliado = true, int nivel = 1, int poder = 10, int expBase = 0)
         : nombre(nombre), esAliado(esAliado), nivel(nivel), poderCombate(poder),
-          vida(100), experienciaActual(0), experienciaParaNivel(100) {}
+          vida(100), experienciaActual(expBase), experienciaParaNivel(100 * nivel) {}
 
-    // Getters const
     string getNombre() const { return nombre; }
     bool getEsAliado() const { return esAliado; }
     int getNivel() const { return nivel; }
@@ -31,17 +28,14 @@ public:
     int getExperienciaActual() const { return experienciaActual; }
     int getExperienciaParaNivel() const { return experienciaParaNivel; }
 
-    // Setters
-    void setNivel(int n) { nivel = n; }
-    void setPoderCombate(int p) { poderCombate = p; }
-
-    // Lógica RPG
     void ganarExperiencia(int exp) {
         experienciaActual += exp;
-        // Lógica recursiva para subir de nivel si sobra mucha exp
+        // Mensaje exacto de la captura
+        cout << "- " << nombre << " gano " << exp << " EXP" << endl;
+
         if (experienciaActual >= experienciaParaNivel) {
             subirNivel();
-            // Si sigue sobrando exp, llamada recursiva (opcional)
+            // Si sobra mucha exp, recursión para seguir subiendo
             if (experienciaActual >= experienciaParaNivel) ganarExperiencia(0);
         }
     }
@@ -51,19 +45,15 @@ public:
         nivel++;
         poderCombate += 5;
         vida += 20;
-        experienciaParaNivel += 50;
-        cout << nombre << " sube a nivel " << nivel << "!" << endl;
+        experienciaParaNivel = 100 * nivel;
+        // Formato visual de la captura (Amarillo simulado o destacado)
+        cout << "  \033[1;33m¡SUBIO AL NIVEL " << nivel << "!\033[0m" << endl;
     }
 
-    // IMPRESCINDIBLE SEGÚN FOTO
     void aplicarItem(const Item& item) {
-        if (item.getTipo() == BOOST_ATAQUE) {
-            poderCombate += item.getValor();
-        } else if (item.getTipo() == BOOST_VIDA) {
-            vida += item.getValor();
-        } else if (item.getTipo() == BOOST_EXPERIENCIA) {
-            ganarExperiencia(item.getValor());
-        }
+        if (item.getTipo() == BOOST_ATAQUE) poderCombate += item.getValor();
+        else if (item.getTipo() == BOOST_VIDA) vida += item.getValor();
+        else if (item.getTipo() == BOOST_EXPERIENCIA) ganarExperiencia(item.getValor());
     }
 
     void recibirDanio(int danio) {
@@ -73,9 +63,14 @@ public:
 
     bool estaVivo() const { return vida > 0; }
 
-    void mostrarInfo() const {
-        cout << "Soldado: " << nombre << " | Nvl: " << nivel
-             << " | Poder: " << poderCombate << " | Vida: " << vida << endl;
+    // FORMATO EXACTO DE LA CAPTURA
+    // Ejemplo: [0] Soldado: Patrik | Bando: Aliado | Nivel: 5 | Poder: 25 | Exp: 0/500
+    void mostrarInfo(int index) const {
+        cout << "   [" << index << "] Soldado: " << nombre
+             << " | Bando: " << (esAliado ? "Aliado" : "Enemigo")
+             << " | Nivel: " << nivel
+             << " | Poder: " << poderCombate
+             << " | Exp: " << experienciaActual << "/" << experienciaParaNivel << endl;
     }
 };
 

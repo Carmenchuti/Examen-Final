@@ -10,8 +10,7 @@ class Ejercito {
 private:
     string nombreEjercito;
     bool esAliado;
-    // En la foto: "DinamicaMemoryList<Tropa*>* tropas"
-    LinkedList<Tropa*>* tropas; 
+    LinkedList<Tropa*>* tropas;
 
 public:
     Ejercito(string nombre, bool aliado) : nombreEjercito(nombre), esAliado(aliado) {
@@ -23,7 +22,6 @@ public:
         delete tropas;
     }
 
-    // Getters y Setters básicos según foto...
     string getNombre() const { return nombreEjercito; }
     LinkedList<Tropa*>* getListaTropas() const { return tropas; }
 
@@ -35,7 +33,6 @@ public:
         tropas->removeAt(index);
     }
 
-    // Métodos de conteo recursivo
     int getNumSoldadosTotal() const {
         int total = 0;
         tropas->forEach([&total](Tropa* t) {
@@ -60,11 +57,24 @@ public:
         return total;
     }
 
+    // EL RECUADRO EXACTO DE LA CAPTURA
     void mostrarInfo() const {
-        cout << "=== EJERCITO: " << nombreEjercito << " ===" << endl;
-        cout << "Poder Total: " << getPoderCombateTotal() << endl;
-        tropas->forEach([](Tropa* t) {
-            t->mostrarInfo();
+        cout << "\n\n=== TROPAS EXISTENTES ===" << endl;
+        cout << "\n________________________________________________________" << endl;
+        cout << "||                                                    ||" << endl;
+        cout << "||  EJERCITO: " << nombreEjercito << "       ||" << endl;
+        cout << "||____________________________________________________||" << endl;
+        cout << "||                                                    ||" << endl;
+        cout << "||  Bando: " << (esAliado ? "Aliado" : "Enemigo") << "                         ||" << endl;
+        cout << "||  Numero de tropas: " << tropas->getSize() << "                               ||" << endl;
+        cout << "||  Total de soldados: " << getNumSoldadosTotal() << "                              ||" << endl;
+        cout << "||  Soldados vivos: " << getNumSoldadosVivos() << "                                 ||" << endl;
+        cout << "||  Poder de combate total: " << getPoderCombateTotal() << "                       ||" << endl;
+        cout << "||____________________________________________________||" << endl;
+
+        int i = 0;
+        tropas->forEach([&i](Tropa* t) {
+            t->mostrarInfo(i++);
         });
     }
 };

@@ -181,7 +181,11 @@ public:
                 }
             }
         }
+<<<<<<< Updated upstream
         cout << "Enter para continuar..."; cin.ignore(); cin.get();
+=======
+
+>>>>>>> Stashed changes
     }
 
     // --- GUARDADO REAL (SERIALIZACIÓN SIMPLE) ---

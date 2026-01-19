@@ -1,7 +1,22 @@
+
+#ifdef _WIN32
+#include <windows.h>
+void activarColores() {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dwMode = 0;
+    GetConsoleMode(hOut, &dwMode);
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hOut, dwMode);
+}
+#endif
+// -------------------------------------------------------
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <filesystem> // Para leer la carpeta
+
+// Incluimos Jugador.h DESPUÉS de windows.h para evitar el error de 'byte'
 #include "Jugador.h"
 
 using namespace std;
@@ -13,9 +28,15 @@ void pausa() {
 }
 
 int main() {
+    // ACTIVAR COLORES EN WINDOWS
+    #ifdef _WIN32
+    activarColores();
+    system("chcp 65001"); // Para que las tildes salgan bien
+    #endif
+
     int opInicio = 0;
     string usuario, pass;
-    Jugador* elJugador = nullptr; // Puntero vacío al principio
+    Jugador* elJugador = nullptr;
 
     do {
         // --- PANTALLA INICIO ---
@@ -38,15 +59,14 @@ int main() {
         if (opInicio == 1) {
             cout << CYAN << "\n--- ARCHIVOS ENCONTRADOS ---" << RESET << endl;
 
-            // Verificamos si existe la carpeta json
             if (!fs::exists("json")) {
                 cout << RED << "No existe la carpeta 'json'. Crea una partida primero." << RESET << endl;
                 continue;
             }
 
-            // Listamos los archivos
             vector<string> archivos;
             int contador = 1;
+            // Listamos los archivos de la carpeta
             for (const auto& entry : fs::directory_iterator("json")) {
                 if (entry.path().extension() == ".json") {
                     cout << "[" << contador << "] " << entry.path().filename().string() << endl;
@@ -67,19 +87,18 @@ int main() {
             if (seleccion > 0 && seleccion <= archivos.size()) {
                 string archivoElegido = archivos[seleccion - 1];
 
-                // Truco: Extraemos el nombre del jugador del nombre del archivo
-                // Formato: Nombre_partida.json
+                // Extraemos el nombre: "Carmen_partida.json" -> "Carmen"
                 size_t guion = archivoElegido.find("_partida.json");
                 if (guion != string::npos) {
                     usuario = archivoElegido.substr(0, guion);
                     cout << GREEN << "\n¡Lectura exitosa!" << RESET << endl;
                     cout << YELLOW << "Bienvenido de nuevo, Gran Comandante " << usuario << "." << RESET << endl;
                     cout << "Tus tropas estaban esperandote." << endl;
-                    pass = "******"; // Contraseña simulada al cargar
+                    pass = "******";
                     elJugador = new Jugador(usuario, pass);
                     pausa();
                 } else {
-                    cout << RED << "Archivo corrupto o nombre invalido." << RESET << endl;
+                    cout << RED << "Archivo invalido." << RESET << endl;
                     continue;
                 }
             } else {
@@ -100,9 +119,9 @@ int main() {
             pausa();
         }
 
-        // --- PRE-CARGA DE DATOS (PARA QUE NO ESTÉ VACÍO EL JUEGO) ---
-        // Si hemos creado jugador (cargado o nuevo), le damos tropas
+        // --- LÓGICA DEL JUEGO ---
         if (elJugador != nullptr) {
+            // Tropa Demo
             Tropa* t1 = new Tropa("Escuadron Crustaceo");
             t1->agregarSoldado(new Soldado("Patrik", true, 5, 25, 0));
             t1->agregarSoldado(new Soldado("Bob", true, 5, 25, 0));
@@ -114,7 +133,7 @@ int main() {
             elJugador->reclutarSoldado("Ragnar", 4, 30, 0);
             elJugador->reclutarSoldado("Bjorn", 4, 32, 0);
 
-            // --- MENÚ PRINCIPAL DEL JUEGO ---
+            // MENÚ PRINCIPAL
             int opMenu = 0;
             do {
                 cout << "\n=======================================" << endl;
@@ -155,7 +174,7 @@ int main() {
             } while (opMenu != 5);
 
             delete elJugador;
-            elJugador = nullptr; // Limpiamos para la siguiente vuelta del bucle
+            elJugador = nullptr;
         }
 
     } while (opInicio != 0);

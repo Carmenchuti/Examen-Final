@@ -4,4 +4,5 @@ project(Examen_Final)
 set(CMAKE_CXX_STANDARD 14)
 
 add_executable(Examen_Final
-        main.cpp)
+        main.cpp
+        LinkedList.h)

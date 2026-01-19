@@ -247,8 +247,6 @@ public:
                 }
             }
         }
-        cout << "\n(Presiona una tecla y Enter para continuar)";
-        string dummy; cin >> dummy;
     }
 
     void guardarPartida() {

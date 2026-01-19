@@ -4,7 +4,13 @@
 #include "Item.h"
 #include <string>
 #include <iostream>
+
 using namespace std;
+
+// Definimos colores también aquí por si acaso
+#define RESET   "\033[0m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
 
 class Soldado {
 private:
@@ -17,54 +23,59 @@ private:
     int experienciaParaNivel;
 
 public:
+    // Constructor completo
     Soldado(const string& nombre = "", bool esAliado = true, int nivel = 1, int poder = 10, int expBase = 0)
         : nombre(nombre), esAliado(esAliado), nivel(nivel), poderCombate(poder),
-          vida(100), experienciaActual(expBase), experienciaParaNivel(100 * nivel) {}
+          vida(100), experienciaActual(expBase)
+    {
+        // La experiencia necesaria crece con el nivel (Nivel 1 = 100, Nivel 5 = 500)
+        experienciaParaNivel = 100 * nivel;
+    }
 
     string getNombre() const { return nombre; }
     bool getEsAliado() const { return esAliado; }
     int getNivel() const { return nivel; }
     int getPoderCombate() const { return poderCombate; }
-    int getExperienciaActual() const { return experienciaActual; }
-    int getExperienciaParaNivel() const { return experienciaParaNivel; }
 
+    // --- LÓGICA DE EXPERIENCIA ---
     void ganarExperiencia(int exp) {
         experienciaActual += exp;
-        // Mensaje exacto de la captura
-        cout << "- " << nombre << " gano " << exp << " EXP" << endl;
 
-        if (experienciaActual >= experienciaParaNivel) {
+        // Mensaje visual para confirmar que reciben XP
+        cout << "  -> " << nombre << " gana " << exp << " XP. (Total: " << experienciaActual << "/" << experienciaParaNivel << ")" << endl;
+
+        // Subida de nivel (Bucle por si sube varios niveles de golpe)
+        while (experienciaActual >= experienciaParaNivel) {
             subirNivel();
-            // Si sobra mucha exp, recursión para seguir subiendo
-            if (experienciaActual >= experienciaParaNivel) ganarExperiencia(0);
         }
     }
 
     void subirNivel() {
-        experienciaActual -= experienciaParaNivel;
+        experienciaActual -= experienciaParaNivel; // Se resta la XP gastada (ej: tenias 120, gastas 100, te quedan 20)
         nivel++;
-        poderCombate += 5;
+        poderCombate += 5; // Sube stats
         vida += 20;
-        experienciaParaNivel = 100 * nivel;
-        // Formato visual de la captura (Amarillo simulado o destacado)
-        cout << "  \033[1;33m¡SUBIO AL NIVEL " << nivel << "!\033[0m" << endl;
+        experienciaParaNivel = 100 * nivel; // El siguiente nivel cuesta más
+
+        cout << YELLOW << "     ¡" << nombre << " HA SUBIDO A NIVEL " << nivel << "! (+Poder, +Vida)" << RESET << endl;
     }
 
     void aplicarItem(const Item& item) {
-        if (item.getTipo() == BOOST_ATAQUE) poderCombate += item.getValor();
-        else if (item.getTipo() == BOOST_VIDA) vida += item.getValor();
-        else if (item.getTipo() == BOOST_EXPERIENCIA) ganarExperiencia(item.getValor());
+        if (item.getTipo() == BOOST_ATAQUE) {
+            poderCombate += item.getValor();
+            cout << "  -> " << nombre << " aumenta su ataque en " << item.getValor() << "." << endl;
+        }
+        else if (item.getTipo() == BOOST_VIDA) {
+            vida += item.getValor();
+            cout << "  -> " << nombre << " recupera " << item.getValor() << " HP." << endl;
+        }
+        else if (item.getTipo() == BOOST_EXPERIENCIA) {
+            ganarExperiencia(item.getValor());
+        }
     }
 
-    void recibirDanio(int danio) {
-        vida -= danio;
-        if (vida < 0) vida = 0;
-    }
-
-    bool estaVivo() const { return vida > 0; }
-
-    // FORMATO EXACTO DE LA CAPTURA
-    // Ejemplo: [0] Soldado: Patrik | Bando: Aliado | Nivel: 5 | Poder: 25 | Exp: 0/500
+    // --- MOSTRAR INFO (ESTO ES LO QUE VEIAS MAL) ---
+    // Me aseguro de imprimir 'experienciaActual' actualizado
     void mostrarInfo(int index) const {
         cout << "   [" << index << "] Soldado: " << nombre
              << " | Bando: " << (esAliado ? "Aliado" : "Enemigo")
@@ -72,6 +83,9 @@ public:
              << " | Poder: " << poderCombate
              << " | Exp: " << experienciaActual << "/" << experienciaParaNivel << endl;
     }
+
+    bool estaVivo() const { return vida > 0; }
+    void recibirDanio(int dmg) { vida -= dmg; if(vida<0) vida=0; }
 };
 
 #endif

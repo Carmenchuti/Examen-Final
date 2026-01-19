@@ -249,11 +249,6 @@ public:
                 }
             }
         }
-
-        // --- PAUSA SIMPLIFICADA (SOLO ENTER) ---
-        cout << "\nPresiona Enter para continuar...";
-        cin.ignore();
-        cin.get();
     }
 
     void guardarPartida() {

@@ -1,5 +1,6 @@
 
-// --- BLOQUE DE COMPATIBILIDAD WINDOWS ---
+
+// --- BLOQUE DE COMPATIBILIDAD WINDOWS (Colores y UTF-8) ---
 #ifdef _WIN32
 #include <windows.h>
 void activarColores() {
@@ -10,7 +11,7 @@ void activarColores() {
     SetConsoleMode(hOut, dwMode);
 }
 #endif
-// ----------------------------------------
+// ----------------------------------------------------------
 
 #include <iostream>
 #include <string>
@@ -29,22 +30,22 @@ void pausa() {
 }
 
 int main() {
-    // 1. Configuración Inicial
+    // 1. Configuración Inicial del Sistema
     #ifdef _WIN32
-    activarColores(); // Activa colores ANSI en CMD
-    system("chcp 65001"); // Activa UTF-8 (tildes)
+    activarColores();
+    system("chcp 65001");
     #endif
-    srand(time(NULL)); // Semilla para números aleatorios
+    srand(time(NULL)); // Semilla aleatoria
 
     int opInicio = 0;
     string usuario, pass;
     Jugador* elJugador = nullptr;
 
-    // Bandera para saber si debemos crear tropas por defecto o cargar estado
+    // Bandera para controlar el flujo de datos (Nuevo vs Cargar)
     bool esNuevaPartida = false;
 
     do {
-        // --- PANTALLA INICIO ---
+        // --- PANTALLA INICIO (Estilo Visual Demo) ---
         cout << "\n\n";
         cout << YELLOW << "============================================================" << RESET << endl;
         cout << YELLOW << "||       BIENVENIDO AL SISTEMA DE BATALLA GISBERIA        ||" << RESET << endl;
@@ -60,14 +61,14 @@ int main() {
         if (cin.fail()) { cin.clear(); cin.ignore(1000, '\n'); continue; }
         if (opInicio == 0) return 0;
 
-        // --- OPCION 1: CARGAR ---
+        // --- OPCION 1: CARGAR PARTIDA ---
         if (opInicio == 1) {
             if (!fs::exists("json")) {
                 cout << RED << "No hay partidas guardadas." << RESET << endl;
                 continue;
             }
 
-            // Listar archivos .json en la carpeta
+            // Listamos archivos .json
             vector<string> archivos;
             int contador = 1;
             for (const auto& entry : fs::directory_iterator("json")) {
@@ -85,34 +86,36 @@ int main() {
 
             if (sel > 0 && sel <= archivos.size()) {
                 string arch = archivos[sel-1];
+                // Extraemos nombre del archivo (Ej: "Pepe_partida.json" -> "Pepe")
                 size_t guion = arch.find("_partida.json");
                 if (guion != string::npos) {
                     usuario = arch.substr(0, guion);
                     cout << GREEN << "\n[CARGANDO] Recuperando estado de " << usuario << "..." << RESET << endl;
                     pass = "*****";
                     elJugador = new Jugador(usuario, pass);
-                    esNuevaPartida = false; // NO crear tropas por defecto
+                    esNuevaPartida = false; // Indicamos que NO es nueva
                     pausa();
                 }
             }
         }
 
-        // --- OPCION 2: NUEVA ---
+        // --- OPCION 2: NUEVA PARTIDA ---
         else if (opInicio == 2) {
             cout << YELLOW << "\nREY ENOLAS:" << RESET << " Dime tu nombre, soldado." << endl;
             cin >> usuario;
             cout << "Contrasena: "; cin >> pass;
             elJugador = new Jugador(usuario, pass);
-            esNuevaPartida = true; // SÍ crear tropas por defecto
+            esNuevaPartida = true; // Indicamos que ES nueva
             cout << GREEN << "[SISTEMA] Creando nueva partida..." << RESET << endl;
             pausa();
         }
 
-        // --- LÓGICA DE JUEGO ---
+        // --- INICIALIZACIÓN DE DATOS ---
         if (elJugador != nullptr) {
 
             if (esNuevaPartida) {
-                // CONFIGURACIÓN INICIAL (Solo para partidas nuevas)
+                // [ESCENARIO 1: NUEVA PARTIDA]
+                // Creamos tropas iniciales por defecto (Escuadrón Crustáceo)
                 Tropa* t1 = new Tropa("Escuadron Crustaceo");
                 t1->agregarSoldado(new Soldado("Patrik", true, 5, 25, 0));
                 t1->agregarSoldado(new Soldado("Bob", true, 5, 25, 0));
@@ -121,24 +124,30 @@ int main() {
                 t1->agregarSoldado(new Soldado("Dave", true, 5, 25, 0));
                 elJugador->getEjercito()->agregarTropa(t1);
 
+                // Reservas Iniciales
                 elJugador->reclutarSoldado("Ragnar", 4, 30, 0);
                 elJugador->reclutarSoldado("Bjorn", 4, 32, 0);
             }
             else {
-                // CONFIGURACIÓN CARGADA (Simulación de partida avanzada)
-                // Se cargan tropas diferentes para demostrar que no es una partida nueva
+                // [ESCENARIO 2: CARGAR PARTIDA SIMULADA]
+                // Cargamos un estado diferente para diferenciarlo de una partida nueva.
                 Tropa* t1 = new Tropa("Escuadron Veterano");
                 t1->agregarSoldado(new Soldado("Patrik (Veterano)", true, 7, 35, 200));
                 t1->agregarSoldado(new Soldado("Bob (Herido)", true, 7, 35, 200));
-                t1->getListaSoldados()->get(1)->recibirDanio(50); // Simular daño previo
+                t1->getListaSoldados()->get(1)->recibirDanio(50);
                 t1->agregarSoldado(new Soldado("Stuart", true, 7, 35, 200));
-
                 elJugador->getEjercito()->agregarTropa(t1);
 
-                cout << CYAN << "[INFO] Se han cargado tus tropas veteranas." << RESET << endl;
+                // *** CORRECCIÓN CRÍTICA ***:
+                // Añadimos reservas al cargar para que el sistema de refuerzos funcione.
+                elJugador->reclutarSoldado("Refuerzo Veterano 1", 5, 30, 0);
+                elJugador->reclutarSoldado("Refuerzo Veterano 2", 5, 30, 0);
+                elJugador->reclutarSoldado("Recluta Novato", 1, 10, 0);
+
+                cout << CYAN << "[INFO] Se han cargado tus tropas veteranas y reservas." << RESET << endl;
             }
 
-            // --- BUCLE DEL MENÚ PRINCIPAL ---
+            // --- BUCLE PRINCIPAL DEL JUEGO ---
             int opMenu = 0;
             do {
                 cout << "\n=======================================" << endl;

@@ -6,11 +6,13 @@
 #include "Item.h"
 #include <string>
 #include <iostream>
-#include <fstream> // Para guardar fichero
+#include <fstream>
+#include <filesystem> // Necesario para crear carpetas
 
 using namespace std;
+namespace fs = std::filesystem; // Atajo para no escribir std::filesystem todo el rato
 
-// Colores básicos para que quede bonito como en la demo
+// Colores
 #define RESET   "\033[0m"
 #define RED     "\033[31m"
 #define GREEN   "\033[32m"
@@ -22,10 +24,9 @@ private:
     string nombre;
     string passwd;
 
-    // ESTRUCTURAS (Punteros para memoria dinámica)
-    LinkedList<Soldado*>* soldados;       // Reserva de soldados
-    Ejercito* ejercito_guardado;          // Ejército activo
-    LinkedList<Item*>* inventario;        // Mochila
+    LinkedList<Soldado*>* soldados;
+    Ejercito* ejercito_guardado;
+    LinkedList<Item*>* inventario;
 
 public:
     Jugador(string nombre, string pass) : nombre(nombre), passwd(pass) {
@@ -33,13 +34,11 @@ public:
         ejercito_guardado = new Ejercito("Ejercito de " + nombre + " V de Gisberia", true);
         inventario = new LinkedList<Item*>();
 
-        // Items iniciales (Cumple Rúbrica Ejercicio 2)
         inventario->pushBack(new Item("Pocion de Vida", BOOST_VIDA, 50));
         inventario->pushBack(new Item("Espada Legendaria", BOOST_ATAQUE, 20));
         inventario->pushBack(new Item("Libro de Tacticas", BOOST_EXPERIENCIA, 200));
     }
 
-    // --- OPCION 1: CREAR TROPA ---
     void crearNuevaTropa() {
         cout << YELLOW << "\n=== CREAR NUEVA TROPA ===" << RESET << endl;
         string nombreTropa;
@@ -49,19 +48,15 @@ public:
         cout << GREEN << "Tropa creada exitosamente." << RESET << endl;
     }
 
-    // --- OPCION 2: MODIFICAR TROPAS (Como en la foto) ---
     void modificarTropas() {
         char op;
         do {
             cout << YELLOW << "\n=== MODIFICAR TROPAS ===" << RESET << endl;
-            // Mostramos resumen rápido
             if (ejercito_guardado->getListaTropas()->isEmpty()) {
                 cout << "No hay tropas." << endl;
             } else {
-                // Mostramos la primera como ejemplo
                 ejercito_guardado->getListaTropas()->get(0)->mostrarInfo(0);
             }
-
             cout << "\n[E] Eliminar primera tropa" << endl;
             cout << "[V] Volver" << endl;
             cout << "Opcion: ";
@@ -75,15 +70,12 @@ public:
         } while (op != 'V');
     }
 
-    // --- OPCION 3: ENTRENAR (Submenú XP) ---
     void entrenarSoldados() {
         if (ejercito_guardado->getListaTropas()->isEmpty()) {
             cout << "No hay tropas para entrenar." << endl;
             return;
         }
-
         cout << YELLOW << "\n=== ENTRENAMIENTO ===" << RESET << endl;
-        // Listar tropas
         int i = 0;
         ejercito_guardado->getListaTropas()->forEach([&i](Tropa* t) {
             cout << "[" << (i + 1) << "] " << t->getNombreTropa() << endl;
@@ -95,20 +87,15 @@ public:
         if (idx <= 0) return;
 
         Tropa* tropa = ejercito_guardado->getListaTropas()->get(idx - 1);
-
         cout << CYAN << "\n--- TIPO DE ENTRENAMIENTO ---" << RESET << endl;
         cout << "[1] Basico (+50 XP)\n[2] Medio (+150 XP)\n[3] Avanzado (+300 XP)\n[4] Intensivo (+500 XP)" << endl;
         int tipo; cin >> tipo;
 
         int xp = (tipo == 1) ? 50 : (tipo == 2) ? 150 : (tipo == 3) ? 300 : 500;
-
         cout << GREEN << "Entrenando..." << RESET << endl;
-        tropa->getListaSoldados()->forEach([xp](Soldado* s){
-            s->ganarExperiencia(xp);
-        });
+        tropa->getListaSoldados()->forEach([xp](Soldado* s){ s->ganarExperiencia(xp); });
     }
 
-    // --- OPCION 4: VER RESERVA ---
     void verSoldadosDisponibles() {
         cout << CYAN << "\n=== SOLDADOS EN RESERVA ===" << RESET << endl;
         if (soldados->isEmpty()) cout << "Reserva vacia." << endl;
@@ -118,12 +105,10 @@ public:
         }
     }
 
-    // --- OPCION 5: VER TODO ---
     void verTropasExistentes() {
         ejercito_guardado->mostrarInfo();
     }
 
-    // --- RÚBRICA EJERCICIO 2: INVENTARIO ---
     void inventarioComandante() {
         cout << YELLOW << "\n=== MOCHILA ===" << RESET << endl;
         if (inventario->isEmpty()) { cout << "Vacia." << endl; return; }
@@ -135,7 +120,6 @@ public:
         int op; cin >> op;
         if (op >= 0 && op < inventario->getSize()) {
             if (!ejercito_guardado->getListaTropas()->isEmpty()) {
-                // Aplicamos a la primera tropa (simplificado para demo)
                 ejercito_guardado->getListaTropas()->get(0)->aplicarItemATodos(*inventario->get(op));
                 inventario->removeAt(op);
                 cout << GREEN << "Item usado en la primera tropa." << RESET << endl;
@@ -145,7 +129,6 @@ public:
         }
     }
 
-    // --- RÚBRICA EJERCICIO 3: COMBATE Y REFUERZOS ---
     void hogueraDeBatalla() {
         cout << RED << "\n=== HOGUERA DE BATALLA ===" << RESET << endl;
         cout << "1. Festin (+XP)\n2. Combatir\n3. Salir\n> ";
@@ -160,16 +143,13 @@ public:
         else if (op == 2) {
             cout << "\nUn ejercito enemigo aparece..." << endl;
             int miPoder = ejercito_guardado->getPoderCombateTotal();
-            int enemigoPoder = 190; // Valor fijo demo
-
+            int enemigoPoder = 190;
             cout << "Tu Poder: " << miPoder << " vs Enemigo: " << enemigoPoder << endl;
 
             if (miPoder >= enemigoPoder) {
                 cout << GREEN << "¡VICTORIA! El enemigo huye." << RESET << endl;
             } else {
                 cout << RED << "¡DERROTA! Tus tropas sufren bajas." << RESET << endl;
-
-                // --- RÚBRICA: REFUERZOS AUTOMÁTICOS ---
                 cout << YELLOW << "Solicitando refuerzos de la reserva..." << RESET << endl;
                 if (!ejercito_guardado->getListaTropas()->isEmpty() && !soldados->isEmpty()) {
                     Tropa* t = ejercito_guardado->getListaTropas()->get(0);
@@ -179,29 +159,38 @@ public:
                         soldados->removeAt(0);
                         cout << "Refuerzo " << ref->getNombre() << " unido." << endl;
                     }
-                } else {
-                    cout << "No quedan refuerzos." << endl;
-                }
+                } else { cout << "No quedan refuerzos." << endl; }
             }
         }
     }
 
-    // --- GUARDAR PARTIDA (JSON FALSO) ---
+    // --- NUEVO: GUARDA DENTRO DE LA CARPETA JSON ---
     void guardarPartida() {
-        ofstream f(nombre + "_partida.json");
+        // 1. Crear carpeta si no existe
+        if (!fs::exists("json")) {
+            fs::create_directory("json");
+        }
+
+        // 2. Guardar archivo dentro
+        string rutaArchivo = "json/" + nombre + "_partida.json";
+        ofstream f(rutaArchivo);
+
         if (f.is_open()) {
-            f << "{\n \"jugador\": \"" << nombre << "\",\n \"tropas\": "
-              << ejercito_guardado->getListaTropas()->getSize() << "\n}";
+            f << "{\n";
+            f << "  \"jugador\": \"" << nombre << "\",\n";
+            f << "  \"tropas_activas\": " << ejercito_guardado->getListaTropas()->getSize() << "\n";
+            f << "}\n";
             f.close();
-            cout << GREEN << "Guardado en " << nombre << "_partida.json" << RESET << endl;
+
+            cout << GREEN << "\n[SISTEMA] Partida guardada en carpeta 'json': " << nombre << "_partida.json" << RESET << endl;
+        } else {
+            cout << RED << "[ERROR] No se pudo crear el archivo." << RESET << endl;
         }
     }
 
-    // Helper
     void reclutarSoldado(string n, int niv, int pod, int exp) {
         soldados->pushBack(new Soldado(n, true, niv, pod, exp));
     }
-
     Ejercito* getEjercito() { return ejercito_guardado; }
 };
 

@@ -14,9 +14,9 @@ void activarColores() {
 #include <iostream>
 #include <string>
 #include <vector>
-#include <filesystem> // Para leer la carpeta
-
-// Incluimos Jugador.h DESPUÉS de windows.h para evitar el error de 'byte'
+#include <filesystem>
+#include <cstdlib> // <--- NUEVO: Para rand()
+#include <ctime>   // <--- NUEVO: Para time()
 #include "Jugador.h"
 
 using namespace std;

@@ -129,6 +129,7 @@ public:
         }
     }
 
+   // --- COMBATE  ---
     void hogueraDeBatalla() {
         cout << RED << "\n=== HOGUERA DE BATALLA ===" << RESET << endl;
         cout << "1. Festin (+XP)\n2. Combatir\n3. Salir\n> ";
@@ -141,30 +142,68 @@ public:
             });
         }
         else if (op == 2) {
-            cout << "\nUn ejercito enemigo aparece..." << endl;
-            int miPoder = ejercito_guardado->getPoderCombateTotal();
-            int enemigoPoder = 190;
-            cout << "Tu Poder: " << miPoder << " vs Enemigo: " << enemigoPoder << endl;
+            cout << "\n\033[1;35m--- INFORME DE EXPLORADORES ---\033[0m" << endl;
 
-            if (miPoder >= enemigoPoder) {
-                cout << GREEN << "¡VICTORIA! El enemigo huye." << RESET << endl;
+            // 1. Generar número aleatorio de tropas enemigas (Entre 1 y 3)
+            int numTropasEnemigas = (rand() % 3) + 1;
+            int poderTotalEnemigo = 0;
+
+            cout << "¡Se han avistado " << numTropasEnemigas << " tropas enemigas!" << endl;
+
+            // Nombres aleatorios para dar variedad
+            string nombres[] = {"Orcos", "Bandidos", "Esqueletos", "Mercenarios", "Goblins"};
+
+            for(int i = 0; i < numTropasEnemigas; i++) {
+                string nombreAzar = nombres[rand() % 5];
+                // Poder aleatorio entre 50 y 150 por tropa
+                int poderTropa = (rand() % 100) + 50;
+                poderTotalEnemigo += poderTropa;
+
+                cout << " - Tropa enemiga " << (i+1) << ": " << nombreAzar
+                     << " (Poder estimado: " << poderTropa << ")" << endl;
+            }
+
+            cout << "\n-----------------------------------" << endl;
+            int miPoder = ejercito_guardado->getPoderCombateTotal();
+            cout << "TU PODER TOTAL: " << miPoder << endl;
+            cout << "PODER ENEMIGO TOTAL: " << poderTotalEnemigo << endl;
+            cout << "-----------------------------------" << endl;
+
+            if (miPoder >= poderTotalEnemigo) {
+                cout << GREEN << "\n¡VICTORIA GLORIOSA!" << RESET << endl;
+                cout << "El enemigo huye despavorido. Ganas honor y experiencia." << endl;
+                // Premio de XP por ganar
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
+                     t->aplicarItemATodos(Item("Victoria", BOOST_EXPERIENCIA, 200));
+                });
             } else {
-                cout << RED << "¡DERROTA! Tus tropas sufren bajas." << RESET << endl;
-                cout << YELLOW << "Solicitando refuerzos de la reserva..." << RESET << endl;
+                cout << RED << "\n¡DERROTA! Has sido superado numericamente." << RESET << endl;
+                cout << "Tus tropas sufren bajas y huyen..." << endl;
+
+                // --- REFUERZOS (RÚBRICA) ---
+                cout << YELLOW << "\n[SISTEMA] Solicitando refuerzos de emergencia de la reserva..." << RESET << endl;
+
                 if (!ejercito_guardado->getListaTropas()->isEmpty() && !soldados->isEmpty()) {
                     Tropa* t = ejercito_guardado->getListaTropas()->get(0);
+                    int cont = 0;
                     while (!t->estallena() && !soldados->isEmpty()) {
                         Soldado* ref = soldados->get(0);
                         t->agregarSoldado(ref);
                         soldados->removeAt(0);
-                        cout << "Refuerzo " << ref->getNombre() << " unido." << endl;
+                        cout << " >> El soldado " << ref->getNombre() << " se ha unido al frente." << endl;
+                        cont++;
                     }
-                } else { cout << "No quedan refuerzos." << endl; }
+                    if(cont==0) cout << "No caben mas soldados en la primera tropa." << endl;
+                } else {
+                    cout << RED << "No tienes soldados en la reserva para reforzar." << RESET << endl;
+                }
             }
         }
+        cout << "\n(Presiona una tecla y Enter para continuar)";
+        string dummy; cin >> dummy;
     }
 
-    // --- NUEVO: GUARDA DENTRO DE LA CARPETA JSON ---
+    // --- GUARDA DENTRO DE LA CARPETA JSON ---
     void guardarPartida() {
         // 1. Crear carpeta si no existe
         if (!fs::exists("json")) {

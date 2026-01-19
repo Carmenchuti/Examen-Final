@@ -141,7 +141,7 @@ public:
         cout << "Elige tu destino: ";
         int op; cin >> op;
 
-        // OPCIÓN 1: FESTÍN RANDOM
+        // OPCIÓN 1: FESTÍN
         if (op == 1) {
             cout << "\nPreparando la hoguera..." << endl;
             int suerte = rand() % 4;
@@ -149,30 +149,22 @@ public:
             if (suerte == 0) {
                 cout << MAGENTA << "¡INCREIBLE! El Rey Enolas ha enviado un bardo famoso." << RESET << endl;
                 cout << GREEN << "[BONUS] +300 EXP para todos." << RESET << endl;
-                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
-                    t->aplicarItemATodos(Item("Epica", BOOST_EXPERIENCIA, 300));
-                });
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){ t->aplicarItemATodos(Item("Epica", BOOST_EXPERIENCIA, 300)); });
             }
             else if (suerte == 1) {
                 cout << YELLOW << "Huele a carne asada. Una cena copiosa." << RESET << endl;
                 cout << GREEN << "[BONUS] +100 EXP para todos." << RESET << endl;
-                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
-                    t->aplicarItemATodos(Item("Carne Asada", BOOST_EXPERIENCIA, 100));
-                });
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){ t->aplicarItemATodos(Item("Carne Asada", BOOST_EXPERIENCIA, 100)); });
             }
             else if (suerte == 2) {
                 cout << CYAN << "¡BUM! ¡BUM! Los tambores de guerra resuenan." << RESET << endl;
                 cout << GREEN << "[BONUS] +10 ATAQUE permanente para todos." << RESET << endl;
-                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
-                    t->aplicarItemATodos(Item("Furia", BOOST_ATAQUE, 10));
-                });
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){ t->aplicarItemATodos(Item("Furia", BOOST_ATAQUE, 10)); });
             }
             else {
                 cout << RED << "¡PUAJ! La comida estaba en mal estado..." << RESET << endl;
                 cout << RED << "[PENALIZACION] -5 VIDA a todos por indigestión." << RESET << endl;
-                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
-                    t->aplicarItemATodos(Item("Indigestion", BOOST_VIDA, -5));
-                });
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){ t->aplicarItemATodos(Item("Indigestion", BOOST_VIDA, -5)); });
             }
         }
 
@@ -195,31 +187,45 @@ public:
                 ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
                      t->aplicarItemATodos(Item("Victoria", BOOST_EXPERIENCIA, 200));
                 });
+
+                // --- NUEVO: EVENTO ALEATORIO DE CARISMA (Captura) ---
+                int azarReclutar = rand() % 100;
+                // 40% de probabilidad de que ocurra
+                if (azarReclutar < 40) {
+                    cout << "\nEl ejercito enemigo, inspirado por el Valor de tus soldados ha solicitado unirse a tu ejercito. ";
+                    cout << "¿Quieres que se unan a ti?" << endl;
+                    cout << "\n[S]i [N]o" << endl;
+                    char resp;
+                    cin >> resp;
+                    if (resp == 'S' || resp == 's') {
+                        cout << GREEN << "\nLos soldados del ejercito enemigo se han unido a tus tropas gracias a tu Carisma y Convicción en Batalla" << RESET << endl;
+                        // Se unen a la reserva porque la tropa activa podría estar llena
+                        reclutarSoldado("Desertor " + nombreEnemigo, 2, 20, 0);
+                        reclutarSoldado("Desertor " + nombreEnemigo, 2, 20, 0);
+                        cout << CYAN << "(+2 Soldados enemigos añadidos a la reserva)" << RESET << endl;
+                    }
+                }
+                // ----------------------------------------------------
+
             } else {
                 cout << RED << "\n¡DERROTA! Nos están masacrando..." << RESET << endl;
 
-                // FASE DE BAJAS: PRIMERO MUERTE
+                // FASE DE BAJAS
                 if (!ejercito_guardado->getListaTropas()->isEmpty()) {
                     Tropa* t = ejercito_guardado->getListaTropas()->get(0);
-
                     if (!t->estaVacia()) {
                         cout << RED << " >> " << t->getListaSoldados()->get(0)->getNombre() << " ha caido en combate (MUERTO)." << RESET << endl;
-                        t->eliminarSoldado(0); // Hueco libre
+                        t->eliminarSoldado(0);
                     }
-                    // Daño al resto
-                    t->getListaSoldados()->forEach([](Soldado* s){
-                        s->recibirDanio(40);
-                    });
+                    t->getListaSoldados()->forEach([](Soldado* s){ s->recibirDanio(40); });
                     cout << RED << " >> El resto de la tropa ha recibido daño critico." << RESET << endl;
                 }
 
                 // FASE DE REFUERZOS
                 cout << YELLOW << "\n[SISTEMA] ¡Huecos disponibles! Llamando a la reserva..." << RESET << endl;
-
                 int poderRefuerzos = 0;
                 if (!ejercito_guardado->getListaTropas()->isEmpty() && !soldados->isEmpty()) {
                     Tropa* t = ejercito_guardado->getListaTropas()->get(0);
-
                     while (!t->estallena() && !soldados->isEmpty()) {
                         Soldado* ref = soldados->get(0);
                         poderRefuerzos += ref->getPoderCombate();
@@ -231,10 +237,9 @@ public:
 
                 if (poderRefuerzos > 0) {
                     cout << CYAN << "\n[CONTRAATAQUE] ¡Tropas reorganizadas!" << RESET << endl;
-                    cout << "Poder Extra Sumado: " << poderRefuerzos << endl;
-
+                    cout << "Poder Extra: " << poderRefuerzos << endl;
                     int nuevoPoderTotal = ejercito_guardado->getPoderCombateTotal();
-                    cout << "NUEVO PODER TOTAL: " << nuevoPoderTotal << " vs ENEMIGO: " << poderEnemigo << endl;
+                    cout << "NUEVO PODER: " << nuevoPoderTotal << " vs ENEMIGO: " << poderEnemigo << endl;
 
                     if (nuevoPoderTotal >= poderEnemigo) {
                         cout << GREEN << "\n¡VICTORIA EPICA! Los refuerzos han vengado a los caidos." << RESET << endl;
@@ -249,6 +254,11 @@ public:
                 }
             }
         }
+
+        // Pausa limpia (solo Enter)
+        cout << "\nPresiona Enter para continuar...";
+        cin.ignore();
+        cin.get();
     }
 
     void guardarPartida() {

@@ -129,7 +129,7 @@ public:
         }
     }
 
-   // --- COMBATE  ---
+   // --- COMBATE ---
     void hogueraDeBatalla() {
         cout << RED << "\n=== HOGUERA DE BATALLA ===" << RESET << endl;
         cout << "1. Festin (+XP)\n2. Combatir\n3. Salir\n> ";
@@ -144,44 +144,40 @@ public:
         else if (op == 2) {
             cout << "\n\033[1;35m--- INFORME DE EXPLORADORES ---\033[0m" << endl;
 
-            // 1. Generar número aleatorio de tropas enemigas (Entre 1 y 3)
-            int numTropasEnemigas = (rand() % 3) + 1;
+            // CAMBIO: Ahora siempre es 1 tropa, pero aleatoria
+            int numTropasEnemigas = 1;
             int poderTotalEnemigo = 0;
 
-            cout << "¡Se han avistado " << numTropasEnemigas << " tropas enemigas!" << endl;
+            // Nombres aleatorios
+            string nombres[] = {"Orcos de Mordor", "Bandidos del Desierto", "Esqueletos", "Mercenarios", "Goblins"};
+            string nombreEnemigo = nombres[rand() % 5];
 
-            // Nombres aleatorios para dar variedad
-            string nombres[] = {"Orcos", "Bandidos", "Esqueletos", "Mercenarios", "Goblins"};
+            // Poder aleatorio entre 100 y 250 (Un solo enemigo fuerte)
+            int poderEnemigo = (rand() % 151) + 100;
+            poderTotalEnemigo = poderEnemigo;
 
-            for(int i = 0; i < numTropasEnemigas; i++) {
-                string nombreAzar = nombres[rand() % 5];
-                // Poder aleatorio entre 50 y 150 por tropa
-                int poderTropa = (rand() % 100) + 50;
-                poderTotalEnemigo += poderTropa;
-
-                cout << " - Tropa enemiga " << (i+1) << ": " << nombreAzar
-                     << " (Poder estimado: " << poderTropa << ")" << endl;
-            }
+            cout << "¡Se aproxima una tropa enemiga!" << endl;
+            cout << " - Enemigo: " << nombreEnemigo << " (Poder estimado: " << poderEnemigo << ")" << endl;
 
             cout << "\n-----------------------------------" << endl;
             int miPoder = ejercito_guardado->getPoderCombateTotal();
             cout << "TU PODER TOTAL: " << miPoder << endl;
-            cout << "PODER ENEMIGO TOTAL: " << poderTotalEnemigo << endl;
+            cout << "PODER ENEMIGO:  " << poderTotalEnemigo << endl;
             cout << "-----------------------------------" << endl;
 
             if (miPoder >= poderTotalEnemigo) {
                 cout << GREEN << "\n¡VICTORIA GLORIOSA!" << RESET << endl;
-                cout << "El enemigo huye despavorido. Ganas honor y experiencia." << endl;
-                // Premio de XP por ganar
+                cout << "El enemigo ha sido aniquilado." << endl;
+                // Premio
                 ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
                      t->aplicarItemATodos(Item("Victoria", BOOST_EXPERIENCIA, 200));
                 });
             } else {
-                cout << RED << "\n¡DERROTA! Has sido superado numericamente." << RESET << endl;
-                cout << "Tus tropas sufren bajas y huyen..." << endl;
+                cout << RED << "\n¡DERROTA! Has sido superado." << RESET << endl;
+                cout << "Tus tropas sufren bajas..." << endl;
 
-                // --- REFUERZOS (RÚBRICA) ---
-                cout << YELLOW << "\n[SISTEMA] Solicitando refuerzos de emergencia de la reserva..." << RESET << endl;
+                // Refuerzos de la reserva (Rúbrica)
+                cout << YELLOW << "\n[SISTEMA] Solicitando refuerzos de la reserva..." << RESET << endl;
 
                 if (!ejercito_guardado->getListaTropas()->isEmpty() && !soldados->isEmpty()) {
                     Tropa* t = ejercito_guardado->getListaTropas()->get(0);
@@ -190,12 +186,12 @@ public:
                         Soldado* ref = soldados->get(0);
                         t->agregarSoldado(ref);
                         soldados->removeAt(0);
-                        cout << " >> El soldado " << ref->getNombre() << " se ha unido al frente." << endl;
+                        cout << " >> Refuerzo " << ref->getNombre() << " se ha unido." << endl;
                         cont++;
                     }
-                    if(cont==0) cout << "No caben mas soldados en la primera tropa." << endl;
+                    if(cont==0) cout << "No caben mas soldados en la tropa." << endl;
                 } else {
-                    cout << RED << "No tienes soldados en la reserva para reforzar." << RESET << endl;
+                    cout << RED << "No hay refuerzos disponibles." << RESET << endl;
                 }
             }
         }

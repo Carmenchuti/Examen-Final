@@ -1,3 +1,5 @@
+
+
 #ifndef SOLDADO_H
 #define SOLDADO_H
 
@@ -7,7 +9,7 @@
 
 using namespace std;
 
-// Definimos colores también aquí por si acaso
+// Macros de colores para la consola
 #define RESET   "\033[0m"
 #define GREEN   "\033[32m"
 #define YELLOW  "\033[33m"
@@ -23,59 +25,69 @@ private:
     int experienciaParaNivel;
 
 public:
-    // Constructor completo
+    /**
+     * @brief Constructor. Calcula la experiencia necesaria basándose en el nivel.
+     */
     Soldado(const string& nombre = "", bool esAliado = true, int nivel = 1, int poder = 10, int expBase = 0)
         : nombre(nombre), esAliado(esAliado), nivel(nivel), poderCombate(poder),
           vida(100), experienciaActual(expBase)
     {
-        // La experiencia necesaria crece con el nivel (Nivel 1 = 100, Nivel 5 = 500)
-        experienciaParaNivel = 100 * nivel;
+        experienciaParaNivel = 100 * nivel; // Fórmula de escalado
     }
 
+    // Getters básicos
     string getNombre() const { return nombre; }
     bool getEsAliado() const { return esAliado; }
     int getNivel() const { return nivel; }
     int getPoderCombate() const { return poderCombate; }
 
-    // --- LÓGICA DE EXPERIENCIA ---
+    /**
+     * @brief Añade experiencia y comprueba si sube de nivel.
+     * @param exp Cantidad ganada.
+     */
     void ganarExperiencia(int exp) {
         experienciaActual += exp;
-
-        // Mensaje visual para confirmar que reciben XP
         cout << "  -> " << nombre << " gana " << exp << " XP. (Total: " << experienciaActual << "/" << experienciaParaNivel << ")" << endl;
 
-        // Subida de nivel (Bucle por si sube varios niveles de golpe)
+        // Bucle por si sube varios niveles de golpe
         while (experienciaActual >= experienciaParaNivel) {
             subirNivel();
         }
     }
 
+    /**
+     * @brief Sube nivel y mejora estadísticas.
+     */
     void subirNivel() {
-        experienciaActual -= experienciaParaNivel; // Se resta la XP gastada (ej: tenias 120, gastas 100, te quedan 20)
+        experienciaActual -= experienciaParaNivel;
         nivel++;
-        poderCombate += 5; // Sube stats
-        vida += 20;
-        experienciaParaNivel = 100 * nivel; // El siguiente nivel cuesta más
+        poderCombate += 5; // +5 Ataque por nivel
+        vida += 20;        // +20 Vida por nivel
+        experienciaParaNivel = 100 * nivel; // El siguiente cuesta más
 
         cout << YELLOW << "     ¡" << nombre << " HA SUBIDO A NIVEL " << nivel << "! (+Poder, +Vida)" << RESET << endl;
     }
 
+    /**
+     * @brief Aplica el efecto de un Item sobre el soldado.
+     */
     void aplicarItem(const Item& item) {
         if (item.getTipo() == BOOST_ATAQUE) {
             poderCombate += item.getValor();
-            cout << "  -> " << nombre << " aumenta su ataque en " << item.getValor() << "." << endl;
+            cout << "  -> " << nombre << " afila su espada (+" << item.getValor() << " Ataque)." << endl;
         }
         else if (item.getTipo() == BOOST_VIDA) {
             vida += item.getValor();
-            cout << "  -> " << nombre << " recupera " << item.getValor() << " HP." << endl;
+            cout << "  -> " << nombre << " bebe pocion (+" << item.getValor() << " Vida)." << endl;
         }
         else if (item.getTipo() == BOOST_EXPERIENCIA) {
             ganarExperiencia(item.getValor());
         }
     }
 
-    // --- MOSTRAR INFO (ESTO ES LO QUE VEIAS MAL) ---
-    // Me aseguro de imprimir 'experienciaActual' actualizado
+    /**
+     * @brief Imprime la ficha del soldado formateada como en la demo.
+     */
     void mostrarInfo(int index) const {
         cout << "   [" << index << "] Soldado: " << nombre
              << " | Bando: " << (esAliado ? "Aliado" : "Enemigo")

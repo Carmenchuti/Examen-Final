@@ -1,3 +1,5 @@
+
+
 #ifndef EJERCITO_H
 #define EJERCITO_H
 
@@ -33,14 +35,9 @@ public:
         tropas->removeAt(index);
     }
 
-    int getNumSoldadosTotal() const {
-        int total = 0;
-        tropas->forEach([&total](Tropa* t) {
-            total += t->getNumSoldados();
-        });
-        return total;
-    }
-
+    /**
+     * @brief Suma el poder de todas las tropas recursivamente.
+     */
     int getPoderCombateTotal() const {
         int total = 0;
         tropas->forEach([&total](Tropa* t) {
@@ -49,15 +46,7 @@ public:
         return total;
     }
 
-    int getNumSoldadosVivos() const {
-        int total = 0;
-        tropas->forEach([&total](Tropa* t) {
-            total += t->getNumSoldadosVivos();
-        });
-        return total;
-    }
-
-    // EL RECUADRO EXACTO DE LA CAPTURA
+    // Formato visual de tabla idéntico a la captura
     void mostrarInfo() const {
         cout << "\n\n=== TROPAS EXISTENTES ===" << endl;
         cout << "\n________________________________________________________" << endl;
@@ -67,8 +56,6 @@ public:
         cout << "||                                                    ||" << endl;
         cout << "||  Bando: " << (esAliado ? "Aliado" : "Enemigo") << "                         ||" << endl;
         cout << "||  Numero de tropas: " << tropas->getSize() << "                               ||" << endl;
-        cout << "||  Total de soldados: " << getNumSoldadosTotal() << "                              ||" << endl;
-        cout << "||  Soldados vivos: " << getNumSoldadosVivos() << "                                 ||" << endl;
         cout << "||  Poder de combate total: " << getPoderCombateTotal() << "                       ||" << endl;
         cout << "||____________________________________________________||" << endl;
 

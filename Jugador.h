@@ -1,3 +1,4 @@
+
 #ifndef JUGADOR_H
 #define JUGADOR_H
 
@@ -13,7 +14,7 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-// Colores
+// Colores ANSI para la consola
 #define RESET   "\033[0m"
 #define RED     "\033[31m"
 #define GREEN   "\033[32m"
@@ -26,9 +27,10 @@ private:
     string nombre;
     string passwd;
 
-    LinkedList<Soldado*>* soldados;
-    Ejercito* ejercito_guardado;
-    LinkedList<Item*>* inventario;
+    // ESTRUCTURAS PRINCIPALES
+    LinkedList<Soldado*>* soldados;       // Reserva de reclutamiento
+    Ejercito* ejercito_guardado;          // Ejército activo en batalla
+    LinkedList<Item*>* inventario;        // Mochila de objetos
 
 public:
     Jugador(string nombre, string pass) : nombre(nombre), passwd(pass) {
@@ -36,12 +38,15 @@ public:
         ejercito_guardado = new Ejercito("Ejercito de " + nombre + " V de Gisberia", true);
         inventario = new LinkedList<Item*>();
 
+        // Items iniciales (Rúbrica Ejercicio 2)
         inventario->pushBack(new Item("Pocion de Vida", BOOST_VIDA, 50));
         inventario->pushBack(new Item("Espada Legendaria", BOOST_ATAQUE, 20));
         inventario->pushBack(new Item("Libro de Tacticas", BOOST_EXPERIENCIA, 200));
     }
 
-    // --- GESTIÓN DE TROPAS ---
+    /**
+     * @brief Crea una nueva tropa vacía en el ejército.
+     */
     void crearNuevaTropa() {
         cout << YELLOW << "\n=== CREAR NUEVA TROPA ===" << RESET << endl;
         string nombreTropa;
@@ -51,6 +56,9 @@ public:
         cout << GREEN << "Tropa creada exitosamente." << RESET << endl;
     }
 
+    /**
+     * @brief Menú para eliminar o modificar tropas.
+     */
     void modificarTropas() {
         char op;
         do {
@@ -73,6 +81,9 @@ public:
         } while (op != 'V');
     }
 
+    /**
+     * @brief Sistema de entrenamiento para subir experiencia a soldados.
+     */
     void entrenarSoldados() {
         if (ejercito_guardado->getListaTropas()->isEmpty()) {
             cout << "No hay tropas para entrenar." << endl;
@@ -96,6 +107,7 @@ public:
 
         int xp = (tipo == 1) ? 50 : (tipo == 2) ? 150 : (tipo == 3) ? 300 : 500;
         cout << GREEN << "Entrenando..." << RESET << endl;
+        // Aplicamos XP a todos los soldados de la tropa elegida
         tropa->getListaSoldados()->forEach([xp](Soldado* s){ s->ganarExperiencia(xp); });
     }
 
@@ -112,6 +124,10 @@ public:
         ejercito_guardado->mostrarInfo();
     }
 
+    /**
+     * @brief Gestión del inventario (Rúbrica Ejercicio 2).
+     * Permite usar objetos sobre las tropas.
+     */
     void inventarioComandante() {
         cout << YELLOW << "\n=== MOCHILA ===" << RESET << endl;
         if (inventario->isEmpty()) { cout << "Vacia." << endl; return; }
@@ -123,8 +139,9 @@ public:
         int op; cin >> op;
         if (op >= 0 && op < inventario->getSize()) {
             if (!ejercito_guardado->getListaTropas()->isEmpty()) {
+                // Aplicar item a la primera tropa disponible
                 ejercito_guardado->getListaTropas()->get(0)->aplicarItemATodos(*inventario->get(op));
-                inventario->removeAt(op);
+                inventario->removeAt(op); // Consumir objeto
                 cout << GREEN << "Item usado en la primera tropa." << RESET << endl;
             } else {
                 cout << RED << "No tienes tropas." << RESET << endl;
@@ -132,7 +149,10 @@ public:
         }
     }
 
-    // --- HOGUERA DE BATALLA ---
+    /**
+     * @brief Sistema de Combate Completo (Rúbrica Ejercicio 3).
+     * Incluye: Eventos Random, Generación de Enemigos, Lógica de Derrota, Muerte y Refuerzos.
+     */
     void hogueraDeBatalla() {
         cout << RED << "\n======= HOGUERA DE BATALLA =======" << RESET << endl;
         cout << "1. Celebrar Festin (Evento Aleatorio)" << endl;
@@ -141,10 +161,10 @@ public:
         cout << "Elige tu destino: ";
         int op; cin >> op;
 
-        // OPCIÓN 1: FESTÍN
+        // --- OPCIÓN 1: FESTÍN RANDOM ---
         if (op == 1) {
             cout << "\nPreparando la hoguera..." << endl;
-            int suerte = rand() % 4;
+            int suerte = rand() % 4; // Genera aleatorio 0-3
 
             if (suerte == 0) {
                 cout << MAGENTA << "¡INCREIBLE! El Rey Enolas ha enviado un bardo famoso." << RESET << endl;
@@ -168,13 +188,14 @@ public:
             }
         }
 
-        // OPCIÓN 2: COMBATE
+        // --- OPCIÓN 2: COMBATE ---
         else if (op == 2) {
             cout << "\n\033[1;35m--- INFORME DE EXPLORADORES ---\033[0m" << endl;
 
+            // Generación aleatoria de enemigo
             string nombres[] = {"Orcos de Mordor", "Bandidos", "Esqueletos", "Mercenarios", "Goblins"};
             string nombreEnemigo = nombres[rand() % 5];
-            int poderEnemigo = (rand() % 151) + 100; // 100 - 250
+            int poderEnemigo = (rand() % 151) + 100; // Poder entre 100 y 250
 
             cout << "¡Se aproxima una tropa enemiga!" << endl;
             cout << " - Enemigo: " << nombreEnemigo << " (Poder estimado: " << poderEnemigo << ")" << endl;
@@ -183,49 +204,47 @@ public:
             cout << "\nTU PODER: " << miPoder << " vs ENEMIGO: " << poderEnemigo << endl;
 
             if (miPoder >= poderEnemigo) {
+                // VICTORIA
                 cout << GREEN << "\n¡VICTORIA GLORIOSA!" << RESET << endl;
                 ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
                      t->aplicarItemATodos(Item("Victoria", BOOST_EXPERIENCIA, 200));
                 });
 
-                // --- NUEVO: EVENTO ALEATORIO DE CARISMA (Captura) ---
+                // EVENTO DE CARISMA (Reclutar enemigo)
                 int azarReclutar = rand() % 100;
-                // 40% de probabilidad de que ocurra
-                if (azarReclutar < 40) {
+                if (azarReclutar < 40) { // 40% probabilidad
                     cout << "\nEl ejercito enemigo, inspirado por el Valor de tus soldados ha solicitado unirse a tu ejercito. ";
-                    cout << "¿Quieres que se unan a ti?" << endl;
-                    cout << "\n[S]i [N]o" << endl;
-                    char resp;
-                    cin >> resp;
+                    cout << "¿Quieres que se unan a ti? [S]i [N]o: ";
+                    char resp; cin >> resp;
                     if (resp == 'S' || resp == 's') {
                         cout << GREEN << "\nLos soldados del ejercito enemigo se han unido a tus tropas gracias a tu Carisma y Convicción en Batalla" << RESET << endl;
-                        // Se unen a la reserva porque la tropa activa podría estar llena
                         reclutarSoldado("Desertor " + nombreEnemigo, 2, 20, 0);
                         reclutarSoldado("Desertor " + nombreEnemigo, 2, 20, 0);
                         cout << CYAN << "(+2 Soldados enemigos añadidos a la reserva)" << RESET << endl;
                     }
                 }
-                // ----------------------------------------------------
 
             } else {
+                // DERROTA
                 cout << RED << "\n¡DERROTA! Nos están masacrando..." << RESET << endl;
 
-                // FASE DE BAJAS
+                // 1. BAJAS REALISTAS
                 if (!ejercito_guardado->getListaTropas()->isEmpty()) {
                     Tropa* t = ejercito_guardado->getListaTropas()->get(0);
                     if (!t->estaVacia()) {
                         cout << RED << " >> " << t->getListaSoldados()->get(0)->getNombre() << " ha caido en combate (MUERTO)." << RESET << endl;
-                        t->eliminarSoldado(0);
+                        t->eliminarSoldado(0); // Liberar hueco
                     }
-                    t->getListaSoldados()->forEach([](Soldado* s){ s->recibirDanio(40); });
+                    t->getListaSoldados()->forEach([](Soldado* s){ s->recibirDanio(40); }); // Daño masivo
                     cout << RED << " >> El resto de la tropa ha recibido daño critico." << RESET << endl;
                 }
 
-                // FASE DE REFUERZOS
+                // 2. LLAMADA A REFUERZOS (Punto clave de la rúbrica)
                 cout << YELLOW << "\n[SISTEMA] ¡Huecos disponibles! Llamando a la reserva..." << RESET << endl;
                 int poderRefuerzos = 0;
                 if (!ejercito_guardado->getListaTropas()->isEmpty() && !soldados->isEmpty()) {
                     Tropa* t = ejercito_guardado->getListaTropas()->get(0);
+                    // Rellenar huecos con reserva
                     while (!t->estallena() && !soldados->isEmpty()) {
                         Soldado* ref = soldados->get(0);
                         poderRefuerzos += ref->getPoderCombate();
@@ -235,6 +254,7 @@ public:
                     }
                 }
 
+                // 3. SEGUNDA OPORTUNIDAD (Contraataque)
                 if (poderRefuerzos > 0) {
                     cout << CYAN << "\n[CONTRAATAQUE] ¡Tropas reorganizadas!" << RESET << endl;
                     cout << "Poder Extra: " << poderRefuerzos << endl;
@@ -255,16 +275,18 @@ public:
             }
         }
 
-        // Pausa limpia (solo Enter)
         cout << "\nPresiona Enter para continuar...";
-        cin.ignore();
-        cin.get();
+        cin.ignore(); cin.get();
     }
 
+    /**
+     * @brief Guarda la partida en un archivo JSON simulado.
+     * Crea la carpeta 'json' si no existe.
+     */
     void guardarPartida() {
         if (!fs::exists("json")) fs::create_directory("json");
         string ruta = "json/" + nombre + "_partida.json";
-        ofstream f(ruta);
+        ofstream f(ruta); // ofstream sobrescribe por defecto
         if (f.is_open()) {
             f << "{\n  \"jugador\": \"" << nombre << "\",\n  \"tropas\": " << ejercito_guardado->getListaTropas()->getSize() << "\n}\n";
             f.close();

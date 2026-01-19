@@ -161,7 +161,60 @@ public:
     Ejercito* getEjercito() { return ejercito_guardado; }
     LinkedList<Soldado*>* getPoolSoldados() { return soldados; }
 
-    // --- HUECO PARA PERSONA 3 (Combate) ---
-    void hogueraDeBatalla();
+    // --- RÚBRICA EJERCICIO 3: COMBATE Y REFUERZOS ---
+    void hogueraDeBatalla() {
+        cout << "\n🔥 --- HOGUERA DE BATALLA --- 🔥" << endl;
+
+        // 1. Generar Enemigo Aleatorio
+        Ejercito* enemigo = new Ejercito("La Horda Oscura", false);
+        Tropa* tropaMala = new Tropa("Orcos");
+        tropaMala->agregarSoldado(new Soldado("Orco Jefe", false, 5, 50));
+        tropaMala->agregarSoldado(new Soldado("Goblin", false, 1, 10));
+        tropaMala->agregarSoldado(new Soldado("Goblin", false, 1, 10));
+        enemigo->agregarTropa(tropaMala);
+
+        cout << "¡Un ejercito enemigo se aproxima!" << endl;
+        enemigo->mostrarInfo();
+
+        cout << "\nTu poder actual: " << ejercito_guardado->getPoderCombateTotal() << endl;
+        cout << "Poder enemigo: " << enemigo->getPoderCombateTotal() << endl;
+
+        cout << "1. Luchar\n2. Huir\n> ";
+        int op;
+        cin >> op;
+
+        if (op == 1) {
+            // Lógica simple de combate: Gana quien tenga más poder total
+            if (ejercito_guardado->getPoderCombateTotal() >= enemigo->getPoderCombateTotal()) {
+                cout << "¡VICTORIA! Tus tropas han arrasado al enemigo." << endl;
+                // Ganar experiencia (simulado a todos)
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t) {
+                    t->aplicarItemATodos(Item("XP Victoria", BOOST_EXPERIENCIA, 100));
+                });
+            } else {
+                cout << "DERROTA... Tus tropas han sufrido bajas." << endl;
+                // Simular daño a la primera tropa
+                if (!ejercito_guardado->getListaTropas()->isEmpty()) {
+                    Tropa* primera = ejercito_guardado->getListaTropas()->get(0);
+                    // Matamos al primer soldado como castigo
+                    if (!primera->estaVacia()) primera->eliminarSoldado(0);
+
+                    // --- RÚBRICA: REFUERZOS (1 pt) ---
+                    // Si la tropa ha quedado mermada, buscamos en la reserva (soldados)
+                    cout << "¡Solicitando refuerzos de la reserva!" << endl;
+                    while (!primera->estallena() && !soldados->isEmpty()) {
+                        Soldado* refuerzo = soldados->get(0);
+                        primera->agregarSoldado(refuerzo);
+                        soldados->removeAt(0);
+                        cout << "Refuerzo " << refuerzo->getNombre() << " unido al frente." << endl;
+                    }
+                }
+            }
+        } else {
+            cout << "Has huido cobardemente." << endl;
+        }
+
+        delete enemigo; // Limpiar memoria del enemigo generado
+    }
 };
 #endif //EXAMEN_FINAL_JUGADOR_H

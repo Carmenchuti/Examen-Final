@@ -7,10 +7,11 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <filesystem> // Necesario para crear carpetas
+#include <filesystem>
+#include <vector>
 
 using namespace std;
-namespace fs = std::filesystem; // Atajo para no escribir std::filesystem todo el rato
+namespace fs = std::filesystem;
 
 // Colores
 #define RESET   "\033[0m"
@@ -18,6 +19,7 @@ namespace fs = std::filesystem; // Atajo para no escribir std::filesystem todo e
 #define GREEN   "\033[32m"
 #define YELLOW  "\033[33m"
 #define CYAN    "\033[36m"
+#define MAGENTA "\033[35m"
 
 class Jugador {
 private:
@@ -39,6 +41,7 @@ public:
         inventario->pushBack(new Item("Libro de Tacticas", BOOST_EXPERIENCIA, 200));
     }
 
+    // --- GESTIÓN DE TROPAS ---
     void crearNuevaTropa() {
         cout << YELLOW << "\n=== CREAR NUEVA TROPA ===" << RESET << endl;
         string nombreTropa;
@@ -129,69 +132,118 @@ public:
         }
     }
 
-   // --- COMBATE ---
+    // --- HOGUERA DE BATALLA (Ahora con EVENTOS RANDOM) ---
     void hogueraDeBatalla() {
-        cout << RED << "\n=== HOGUERA DE BATALLA ===" << RESET << endl;
-        cout << "1. Festin (+XP)\n2. Combatir\n3. Salir\n> ";
+        cout << RED << "\n======= HOGUERA DE BATALLA =======" << RESET << endl;
+        cout << "1. Celebrar Festin (Evento Aleatorio)" << endl;
+        cout << "2. Otear el horizonte (Combatir)" << endl;
+        cout << "3. Volver" << endl;
+        cout << "Elige tu destino: ";
         int op; cin >> op;
 
+        // --- OPCIÓN 1: FESTÍN RANDOM ---
         if (op == 1) {
-            cout << GREEN << "Tus tropas comen y ganan experiencia." << RESET << endl;
-            ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
-                t->aplicarItemATodos(Item("Festin", BOOST_EXPERIENCIA, 100));
-            });
+            cout << "\nPreparando la hoguera..." << endl;
+
+            // Generamos un número aleatorio del 0 al 3 (4 opciones)
+            int suerte = rand() % 4;
+
+            if (suerte == 0) {
+                // CASO 0: ÉXITO CRÍTICO
+                cout << MAGENTA << "¡INCREIBLE! El Rey Enolas ha enviado un bardo famoso." << RESET << endl;
+                cout << "Tus tropas escuchan historias heroicas y se sienten INVENCIBLES." << endl;
+                cout << GREEN << "[BONUS] +300 EXP para todos." << RESET << endl;
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
+                    t->aplicarItemATodos(Item("Epica", BOOST_EXPERIENCIA, 300));
+                });
+            }
+            else if (suerte == 1) {
+                // CASO 1: BUENA CENA (NORMAL)
+                cout << YELLOW << "Huele a carne asada. Una cena copiosa antes de la batalla." << RESET << endl;
+                cout << "Los soldados recuperan fuerzas." << endl;
+                cout << GREEN << "[BONUS] +100 EXP para todos." << RESET << endl;
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
+                    t->aplicarItemATodos(Item("Carne Asada", BOOST_EXPERIENCIA, 100));
+                });
+            }
+            else if (suerte == 2) {
+                // CASO 2: TAMBORES DE GUERRA (BUFF ATAQUE)
+                cout << CYAN << "¡BUM! ¡BUM! Los tambores de guerra resuenan en la noche." << RESET << endl;
+                cout << "La sangre de tus soldados hierve. Tienen sed de sangre." << endl;
+                cout << GREEN << "[BONUS] +10 ATAQUE permanente para todos." << RESET << endl;
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
+                    t->aplicarItemATodos(Item("Furia", BOOST_ATAQUE, 10));
+                });
+            }
+            else {
+                // CASO 3: MALA SUERTE (CASTIGO DIVERTIDO)
+                cout << RED << "¡PUAJ! El cocinero ha usado setas del bosque prohibido..." << RESET << endl;
+                cout << "Toda la tropa tiene dolor de barriga." << endl;
+                cout << RED << "[PENALIZACION] -5 VIDA a todos por indigestión." << RESET << endl;
+                // Usamos un item con valor negativo para quitar vida
+                ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
+                    t->aplicarItemATodos(Item("Indigestion", BOOST_VIDA, -5));
+                });
+            }
         }
+
+        // --- OPCIÓN 2: COMBATE CON REFUERZOS Y REINTENTO ---
         else if (op == 2) {
             cout << "\n\033[1;35m--- INFORME DE EXPLORADORES ---\033[0m" << endl;
 
-            // CAMBIO: Ahora siempre es 1 tropa, pero aleatoria
-            int numTropasEnemigas = 1;
-            int poderTotalEnemigo = 0;
-
-            // Nombres aleatorios
-            string nombres[] = {"Orcos de Mordor", "Bandidos del Desierto", "Esqueletos", "Mercenarios", "Goblins"};
+            string nombres[] = {"Orcos de Mordor", "Bandidos", "Esqueletos", "Mercenarios", "Goblins"};
             string nombreEnemigo = nombres[rand() % 5];
-
-            // Poder aleatorio entre 100 y 250 (Un solo enemigo fuerte)
-            int poderEnemigo = (rand() % 151) + 100;
-            poderTotalEnemigo = poderEnemigo;
+            int poderEnemigo = (rand() % 151) + 100; // Poder entre 100 y 250
 
             cout << "¡Se aproxima una tropa enemiga!" << endl;
             cout << " - Enemigo: " << nombreEnemigo << " (Poder estimado: " << poderEnemigo << ")" << endl;
 
-            cout << "\n-----------------------------------" << endl;
             int miPoder = ejercito_guardado->getPoderCombateTotal();
-            cout << "TU PODER TOTAL: " << miPoder << endl;
-            cout << "PODER ENEMIGO:  " << poderTotalEnemigo << endl;
-            cout << "-----------------------------------" << endl;
+            cout << "\nTU PODER: " << miPoder << " vs ENEMIGO: " << poderEnemigo << endl;
 
-            if (miPoder >= poderTotalEnemigo) {
-                cout << GREEN << "\n¡VICTORIA GLORIOSA!" << RESET << endl;
-                cout << "El enemigo ha sido aniquilado." << endl;
-                // Premio
+            if (miPoder >= poderEnemigo) {
+                cout << GREEN << "\n¡VICTORIA GLORIOSA! El enemigo ha sido aplastado." << RESET << endl;
                 ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
                      t->aplicarItemATodos(Item("Victoria", BOOST_EXPERIENCIA, 200));
                 });
             } else {
-                cout << RED << "\n¡DERROTA! Has sido superado." << RESET << endl;
-                cout << "Tus tropas sufren bajas..." << endl;
+                cout << RED << "\n¡ESTAMOS PERDIENDO! Nos superan..." << RESET << endl;
 
-                // Refuerzos de la reserva (Rúbrica)
-                cout << YELLOW << "\n[SISTEMA] Solicitando refuerzos de la reserva..." << RESET << endl;
+                // REFUERZOS
+                cout << YELLOW << "\n[SISTEMA] ¡Llamando a la reserva! ¡A las armas!" << RESET << endl;
+
+                int poderRefuerzos = 0;
 
                 if (!ejercito_guardado->getListaTropas()->isEmpty() && !soldados->isEmpty()) {
                     Tropa* t = ejercito_guardado->getListaTropas()->get(0);
-                    int cont = 0;
+
                     while (!t->estallena() && !soldados->isEmpty()) {
                         Soldado* ref = soldados->get(0);
+                        poderRefuerzos += ref->getPoderCombate();
                         t->agregarSoldado(ref);
                         soldados->removeAt(0);
-                        cout << " >> Refuerzo " << ref->getNombre() << " se ha unido." << endl;
-                        cont++;
+                        cout << " >> " << ref->getNombre() << " entra al combate (+ " << ref->getPoderCombate() << " poder)." << endl;
                     }
-                    if(cont==0) cout << "No caben mas soldados en la tropa." << endl;
+                }
+
+                if (poderRefuerzos > 0) {
+                    cout << CYAN << "\n[CONTRAATAQUE] ¡Refuerzos listos!" << RESET << endl;
+                    cout << "Poder Extra Sumado: " << poderRefuerzos << endl;
+
+                    int nuevoPoderTotal = ejercito_guardado->getPoderCombateTotal();
+                    cout << "NUEVO PODER TOTAL: " << nuevoPoderTotal << " vs ENEMIGO: " << poderEnemigo << endl;
+
+                    if (nuevoPoderTotal >= poderEnemigo) {
+                        cout << GREEN << "\n¡VICTORIA EPICA! Los refuerzos han cambiado el destino." << RESET << endl;
+                        ejercito_guardado->getListaTropas()->forEach([](Tropa* t){
+                            t->aplicarItemATodos(Item("Victoria Epica", BOOST_EXPERIENCIA, 300));
+                        });
+                    } else {
+                        cout << RED << "\n¡DERROTA FINAL! Ni con refuerzos fue suficiente..." << RESET << endl;
+                        cout << "Tocad retirada." << endl;
+                    }
                 } else {
-                    cout << RED << "No hay refuerzos disponibles." << RESET << endl;
+                    cout << RED << "¡No quedan refuerzos! La derrota es inevitable." << RESET << endl;
                 }
             }
         }
@@ -199,27 +251,14 @@ public:
         string dummy; cin >> dummy;
     }
 
-    // --- GUARDA DENTRO DE LA CARPETA JSON ---
     void guardarPartida() {
-        // 1. Crear carpeta si no existe
-        if (!fs::exists("json")) {
-            fs::create_directory("json");
-        }
-
-        // 2. Guardar archivo dentro
-        string rutaArchivo = "json/" + nombre + "_partida.json";
-        ofstream f(rutaArchivo);
-
+        if (!fs::exists("json")) fs::create_directory("json");
+        string ruta = "json/" + nombre + "_partida.json";
+        ofstream f(ruta);
         if (f.is_open()) {
-            f << "{\n";
-            f << "  \"jugador\": \"" << nombre << "\",\n";
-            f << "  \"tropas_activas\": " << ejercito_guardado->getListaTropas()->getSize() << "\n";
-            f << "}\n";
+            f << "{\n  \"jugador\": \"" << nombre << "\",\n  \"tropas\": " << ejercito_guardado->getListaTropas()->getSize() << "\n}\n";
             f.close();
-
-            cout << GREEN << "\n[SISTEMA] Partida guardada en carpeta 'json': " << nombre << "_partida.json" << RESET << endl;
-        } else {
-            cout << RED << "[ERROR] No se pudo crear el archivo." << RESET << endl;
+            cout << GREEN << "\n[SISTEMA] Guardado en: " << ruta << RESET << endl;
         }
     }
 
